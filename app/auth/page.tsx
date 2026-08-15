@@ -1,0 +1,14 @@
+'use client';
+import { FormEvent, useState } from 'react';
+import { supabase } from '../../lib/supabase';
+
+export default function AuthPage(){
+ const [mode,setMode]=useState<'login'|'register'>('login'); const [role,setRole]=useState<'client'|'freelancer'|'seller'>('client'); const [email,setEmail]=useState(''); const [password,setPassword]=useState(''); const [name,setName]=useState(''); const [wilaya,setWilaya]=useState('وهران'); const [message,setMessage]=useState(''); const [loading,setLoading]=useState(false);
+ const submit=async(e:FormEvent)=>{e.preventDefault();setMessage('');if(!supabase){setMessage('أضف متغيرات Supabase في بيئة التشغيل أولًا.');return}setLoading(true);
+  if(mode==='login'){const {error}=await supabase.auth.signInWithPassword({email,password}); if(error)setMessage(error.message); else window.location.href='/dashboard';}
+  else {const {data,error}=await supabase.auth.signUp({email,password,options:{data:{full_name:name,role,wilaya}}}); if(error)setMessage(error.message); else {if(data.session) window.location.href='/dashboard'; else setMessage('تم إنشاء الحساب. تحقق من بريدك الإلكتروني لتفعيل الحساب.');}}
+  setLoading(false);
+ };
+ return <main className="authPage"><div className="authCard"><a className="back" href="/">← سوق DZ</a><div className="logo" style={{marginTop:18}}>سوق <span>DZ</span></div><h1>{mode==='login'?'مرحبًا بعودتك':'أنشئ حسابك في سوق DZ'}</h1><p className="muted">{mode==='login'?'سجّل الدخول للوصول إلى لوحة التحكم.':'ابدأ كعميل أو مستقل أو بائع.'}</p>
+ <form onSubmit={submit}>{mode==='register'&&<><input required value={name} onChange={e=>setName(e.target.value)} placeholder="الاسم الكامل"/><div className="roleGrid">{[['client','👤','عميل'],['freelancer','💼','مستقل'],['seller','🏪','بائع']].map(([v,i,t])=><button type="button" key={v} className={'role '+(role===v?'selected':'')} onClick={()=>setRole(v as any)}>{i}<strong>{t}</strong></button>)}</div><select value={wilaya} onChange={e=>setWilaya(e.target.value)}><option>وهران</option><option>الجزائر العاصمة</option><option>عين تموشنت</option><option>سيدي بلعباس</option><option>تلمسان</option><option>سطيف</option></select></>}<input required type="email" value={email} onChange={e=>setEmail(e.target.value)} placeholder="البريد الإلكتروني"/><input required minLength={6} type="password" value={password} onChange={e=>setPassword(e.target.value)} placeholder="كلمة المرور (6 أحرف على الأقل)"/><button disabled={loading} className="btn primary full">{loading?'جارٍ التنفيذ…':mode==='login'?'تسجيل الدخول':'إنشاء الحساب'}</button></form>{message&&<div className="authMessage">{message}</div>}<button className="back" style={{background:'none',border:0,cursor:'pointer'}} onClick={()=>{setMode(mode==='login'?'register':'login');setMessage('')}}>{mode==='login'?'ليس لديك حساب؟ إنشاء حساب':'لديك حساب؟ تسجيل الدخول'}</button></div></main>;
+}
